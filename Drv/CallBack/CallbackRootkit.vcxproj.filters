@@ -34,6 +34,9 @@
     <ClCompile Include="minifilter.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Global.h">
@@ -52,6 +55,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="minifilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

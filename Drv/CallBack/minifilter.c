@@ -138,7 +138,7 @@ FLTAPI MFDPreHandler(
 	UNREFERENCED_PARAMETER(pCompletionContext);
 	ULONG ProcessId, ThreadId;
 
-	// Ôö¼Ó´úÂë;·ÀÖ¹±àÒëÆ÷ÓÅ»¯£»MFDPreHandlerºÍMFDPostHandlerÍ¬Ê±¿ÕÊµÏÖ,»áµ¼ÖÂ±àÒëÆ÷ÓÅ»¯³ÉÒ»¸öº¯Êý;ÔÎ
+	// ï¿½ï¿½ï¿½Ó´ï¿½ï¿½ï¿½;ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ï¿½MFDPreHandlerï¿½ï¿½MFDPostHandlerÍ¬Ê±ï¿½ï¿½Êµï¿½ï¿½,ï¿½áµ¼ï¿½Â±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å»ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½;ï¿½ï¿½
 	if (pData && pData->Thread)
 	{
 		ULONG ProcessId = FltGetRequestorProcessId(pData);

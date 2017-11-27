@@ -3,6 +3,7 @@
 #include "ObCallbacks.h"
 #include "PsNotify.h"
 #include "minifilter.h"
+#include "cm.h"
 #include "Utils.h"
 #include "Global.h"
 
@@ -158,6 +159,8 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING RegistryPath)
 			DisablePsProcessCallback();
 			// kkll_m_minifilters_list();
 			status = kkll_m_minifilters_list();
+
+			EnumCmRegisterCallback();
 						
 			kprintf("%s: Driver Loaded!\n", __FUNCTION__);
 		}
