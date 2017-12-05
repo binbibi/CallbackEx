@@ -1,7 +1,10 @@
 #include <ntddk.h>
 #include "Utils.h"
 #include "Global.h"
+#include "Native.h"
 
+
+KEVENT kEvent;
 
 BOOLEAN GetDriverInformation(
 	_In_ wchar_t* DriverName,
@@ -196,3 +199,101 @@ BOOLEAN InitDynamicData()
 
 	return bStatus;
 }
+
+
+VOID KSleep(ULONG ulMilliseconds)
+{
+	LARGE_INTEGER my_interval;
+	my_interval.QuadPart = DELAY_ONE_MILLISECOND;
+	my_interval.QuadPart *= ulMilliseconds;
+	KeDelayExecutionThread(KernelMode, 0, &my_interval);
+}
+
+
+// 实现驱动路径的欺骗
+VOID FakeSelf(__in PDRIVER_OBJECT pSelfDriver)
+{
+	// 保存这个 
+	WCHAR szDriverName[256];
+	WCHAR szCheatDrvName[] = L"AUSAAUDIO";
+	PVOID pDrvName = NULL;
+	PKLDR_DATA_TABLE_ENTRY pSelfModule = NULL;
+
+	pSelfModule = (PKLDR_DATA_TABLE_ENTRY)pSelfDriver->DriverSection;
+	if (pSelfDriver->DriverName.Buffer)
+	{
+		wcsncpy(szDriverName, pSelfDriver->DriverName.Buffer, pSelfDriver->DriverName.Length);
+		ExFreePool(pSelfDriver->DriverName.Buffer);
+
+		pDrvName = ExAllocatePool(PagedPool, (wcslen(szCheatDrvName) + 1) * sizeof(wchar_t));
+		wcsncpy(pDrvName, szCheatDrvName, wcslen(szCheatDrvName));
+		pSelfDriver->DriverName.Buffer = pDrvName;
+		pSelfDriver->DriverName.MaximumLength = pSelfDriver->DriverName.Length = wcslen(szCheatDrvName) + 1;
+	}
+
+	for (PLIST_ENTRY pListEntry = pSelfModule->InLoadOrderLinks.Flink->Flink; pListEntry != &pSelfModule->InLoadOrderLinks; pListEntry = pListEntry->Flink)
+	{
+		PKLDR_DATA_TABLE_ENTRY pEntry = CONTAINING_RECORD(pListEntry, KLDR_DATA_TABLE_ENTRY, InLoadOrderLinks);
+
+		kprintf("%s Driver Path is %wZ \n", __FUNCTION__, &pEntry->FullDllName);
+	}
+
+	// From WRK
+	// DataTableEntry->FullDllName.Buffer = ExAllocatePoolWithTag(PagedPool | POOL_COLD_ALLOCATION,
+	// PrefixedImageName.Length + sizeof(UNICODE_NULL),'TDmM');
+	// 
+	// 可以释放这个内存
+	if (pSelfModule->FullDllName.Buffer)
+	{
+		ExFreePool(pSelfModule->FullDllName.Buffer);
+		pDrvName = ExAllocatePool(PagedPool, pSelfModule->FullDllName.Length);
+		memset(pDrvName, 0, pSelfModule->FullDllName.Length);
+		pSelfModule->FullDllName.Buffer = pDrvName;
+		pSelfModule->FullDllName.MaximumLength = pSelfModule->FullDllName.Length;
+	}
+
+	// From WRK
+	// DataTableEntrySize = sizeof (KLDR_DATA_TABLE_ENTRY) + DebugInfoSize + BaseName.Length + sizeof(UNICODE_NULL);
+	// RtlCopyMemory (DataTableEntry->BaseDllName.Buffer, BaseName.Buffer, BaseName.Length);
+	// DataTableEntry->BaseDllName.Buffer[BaseName.Length / sizeof(WCHAR)] = UNICODE_NULL;
+	// 	
+	// 不能直接释放这个buffer,原因在上面
+	if (pSelfModule->BaseDllName.Buffer)
+	{
+		// ExFreePool(pSelfModule->BaseDllName.Buffer);
+		// pDrvName = ExAllocatePool(PagedPool, pSelfModule->BaseDllName.Length);
+		memset(pSelfModule->BaseDllName.Buffer, 0, pSelfModule->BaseDllName.Length);
+		// pSelfModule->BaseDllName.Buffer = pDrvName;
+		// pSelfModule->BaseDllName.MaximumLength = pSelfModule->BaseDllName.Length;
+	}
+}
+
+
+VOID MyThreadFunc(IN PVOID context)
+{	// 延时处理 10s
+	KSleep(10 * 1000);
+
+	FakeSelf((PDRIVER_OBJECT)context);
+	
+	KeSetEvent(&kEvent, 0, FALSE);
+	PsTerminateSystemThread(STATUS_SUCCESS);
+}
+
+
+VOID MyCreateThread(PVOID context)
+{
+	HANDLE   hThread;
+	NTSTATUS  status;
+
+	KeInitializeEvent(&kEvent, SynchronizationEvent, TRUE);
+	status = PsCreateSystemThread(&hThread, 0, NULL, NULL, NULL, MyThreadFunc, context);
+	if (!NT_SUCCESS(status))
+	{
+		return;
+	}
+
+	ZwClose(hThread);
+	KeWaitForSingleObject(&kEvent, Executive, KernelMode, FALSE, 0);
+}
+
+

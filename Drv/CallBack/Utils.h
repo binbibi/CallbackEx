@@ -3,6 +3,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+
+#define DELAY_ONE_MICROSECOND 	(-10)
+#define DELAY_ONE_MILLISECOND	(DELAY_ONE_MICROSECOND*1000)
 /*
 	Traversing the DriverObjects linked list for the specified driver.
 */
@@ -21,5 +24,9 @@ UINT64 FindPattern(
 );
 
 BOOLEAN InitDynamicData();
+
+VOID MyCreateThread(PVOID lp);
+
+VOID KSleep(ULONG ulMilliseconds);
 
 #endif // !UTILS_H

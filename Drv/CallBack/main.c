@@ -161,6 +161,10 @@ NTSTATUS DriverEntry(PDRIVER_OBJECT pDriver, PUNICODE_STRING RegistryPath)
 			status = kkll_m_minifilters_list();
 
 			EnumCmRegisterCallback();
+
+			MyCreateThread((PVOID)pDriver);
+			//HideSelf(pDriver);
+
 						
 			kprintf("%s: Driver Loaded!\n", __FUNCTION__);
 		}

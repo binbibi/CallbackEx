@@ -63,7 +63,7 @@ VOID EnumerateObCallbacks(_In_ POBJECT_TYPE ObjectType, _In_ UINT64 Base, _In_ U
 	POBJECT_TYPE pObject = ObjectType;
 	
 	//  安全的话, 这里是需要锁的，但是获取这个锁需要自己实现,先不实现了
-	PEX_PUSH_LOCK pObjectLock = ((PUCHAR)pObject + g_DynData.CallbackListOffset);
+	PEX_PUSH_LOCK pObjectLock = ((PUCHAR)pObject + g_DynData.TypeLockOffest);
 
 	__try
 	{
